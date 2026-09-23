@@ -1,0 +1,6 @@
+{
+  "name": "Kinetix",
+  "description": "Production-grade AI image and video creative platform with multi-shot sequences, interactive Flow canvas, and studio generation orchestration.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
