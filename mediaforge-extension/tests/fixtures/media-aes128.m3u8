@@ -1,0 +1,6 @@
+#EXTM3U
+#EXT-X-TARGETDURATION:10
+#EXT-X-KEY:METHOD=AES-128,URI="https://keys.example.com/key1",IV=0x1234
+#EXTINF:10,
+enc0.ts
+#EXT-X-ENDLIST

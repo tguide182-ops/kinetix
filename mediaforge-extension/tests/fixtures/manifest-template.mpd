@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Static on-demand manifest with separate video and audio -->
+<MPD xmlns="urn:mpeg:dash:schema:mpd:2011" type="static" mediaPresentationDuration="PT0H0M30.000S" minBufferTime="PT2S" profiles="urn:mpeg:dash:profile:isoff-live:2011">
+  <BaseURL>https://media.example.com/vod/</BaseURL>
+  <Period id="p0">
+    <AdaptationSet id="1" contentType="video" mimeType="video/mp4" segmentAlignment="true">
+      <SegmentTemplate timescale="1000" duration="4000" startNumber="1" initialization="$RepresentationID$/init.mp4" media="$RepresentationID$/seg-$Number%05d$.m4s"/>
+      <Representation id="v1080" bandwidth="4500000" width="1920" height="1080" frameRate="30000/1001" codecs="avc1.640028"/>
+      <Representation id="v720" bandwidth="2500000" width="1280" height="720" frameRate="30" codecs="avc1.64001f"/>
+      <Representation id="v480" bandwidth="1000000" width="854" height="480" frameRate="30" codecs="avc1.4d401e"/>
+    </AdaptationSet>
+    <AdaptationSet id="2" contentType="audio" mimeType="audio/mp4" lang="en">
+      <Label>English &amp; Commentary</Label>
+      <SegmentTemplate timescale="48000" initialization="audio/$RepresentationID$/init.mp4" media="audio/$RepresentationID$/$Time$.m4s">
+        <SegmentTimeline>
+          <S t="0" d="192000" r="6"/>
+          <S d="96000"/>
+        </SegmentTimeline>
+      </SegmentTemplate>
+      <Representation id="a128" bandwidth="128000" codecs="mp4a.40.2" audioSamplingRate="48000"/>
+      <Representation id="a64" bandwidth="64000" codecs="mp4a.40.5" audioSamplingRate="48000"/>
+    </AdaptationSet>
+  </Period>
+</MPD>
