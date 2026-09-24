@@ -1,0 +1,25 @@
+.wrap { max-width: 920px; margin: 0 auto; padding: 24px 20px 48px; }
+.top { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+.brand { flex: 1; }
+.brand h1 { font-size: 20px; }
+.brand p { margin: 2px 0 0; font-size: 13px; }
+.filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.filter { border: 1px solid var(--border); background: var(--surface); border-radius: 999px; padding: 5px 12px; font-weight: 600; font-size: 13px; cursor: pointer; color: var(--text-2); }
+.filter[aria-selected="true"] { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+.filter .n { margin-left: 6px; font-weight: 500; color: var(--text-3); }
+.list { display: grid; gap: 10px; }
+.job { padding: 12px 14px; display: grid; gap: 8px; }
+.job-head { display: flex; gap: 10px; align-items: baseline; }
+.job-name { font-weight: 600; flex: 1; }
+.job-meta { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12.5px; color: var(--text-2); }
+.job-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.job-foot { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.err { color: var(--danger); font-size: 12.5px; }
+.detail { font-family: var(--mono); font-size: 11.5px; color: var(--text-3); word-break: break-all; }
+.empty { text-align: center; padding: 60px 10px; color: var(--text-2); }
+.status-queued, .status-paused { color: var(--warning); }
+.status-active { color: var(--accent); }
+.status-completed { color: var(--success); }
+.status-failed { color: var(--danger); }
+.status-cancelled { color: var(--text-3); }
+@media (max-width: 560px) { .job-head { flex-direction: column; gap: 2px; } }

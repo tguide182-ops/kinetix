@@ -96,3 +96,9 @@ export function selectAudioVariant(
   if (pref === 'balanced') return sorted[Math.floor((sorted.length - 1) / 2)];
   return sorted[0];
 }
+
+/** Validate an untrusted quality preference coming from a UI message. */
+export function parseQualityPreference(v: unknown): QualityPreference | undefined {
+  if (v === 'auto' || v === 'highest' || v === 'audio') return v;
+  return typeof v === 'string' && /^\d{3,4}p$/.test(v) ? (v as QualityPreference) : undefined;
+}

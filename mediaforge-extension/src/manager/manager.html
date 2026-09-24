@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MediaForge — Downloads</title>
+    <link rel="stylesheet" href="../ui/base.css" />
+    <link rel="stylesheet" href="manager.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="top">
+        <div class="logo" aria-hidden="true">M</div>
+        <div class="brand">
+          <h1>Downloads</h1>
+          <p class="faint">MediaForge download manager</p>
+        </div>
+        <button id="clear-finished" class="btn">Clear finished</button>
+        <button id="open-options" class="btn ghost">Settings</button>
+      </header>
+      <nav id="filters" class="filters" role="tablist" aria-label="Filter downloads"></nav>
+      <main id="list" class="list" aria-live="polite"></main>
+    </div>
+    <script src="manager.js" type="module"></script>
+  </body>
+</html>

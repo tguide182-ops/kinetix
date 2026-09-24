@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MediaForge</title>
+    <link rel="stylesheet" href="../ui/base.css" />
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div class="logo" aria-hidden="true">M</div>
+      <div class="brand">
+        <h1>MEDIAFORGE</h1>
+        <p class="faint">Universal Media Downloader</p>
+      </div>
+      <button id="open-options" class="btn ghost icon" title="Settings" aria-label="Open settings">⚙</button>
+    </header>
+
+    <section class="page" aria-label="Current page">
+      <div class="page-label faint">Current page</div>
+      <div id="page-host" class="page-host truncate">—</div>
+      <div id="page-title" class="page-title faint truncate"></div>
+    </section>
+
+    <div id="notices" class="notices" aria-live="polite"></div>
+
+    <main id="content" aria-live="polite" aria-busy="true">
+      <div class="loading faint">Looking for media…</div>
+    </main>
+
+    <footer class="bottom">
+      <div class="row">
+        <label class="sr-only" for="all-quality">Quality for Download All</label>
+        <select id="all-quality" title="Quality used for streams">
+          <option value="auto">Auto</option>
+          <option value="highest">Highest quality</option>
+          <option value="1080p">1080p</option>
+          <option value="720p">720p</option>
+          <option value="480p">480p</option>
+          <option value="audio">Audio only</option>
+        </select>
+        <button id="download-all" class="btn primary" disabled>Download All</button>
+      </div>
+      <div class="row">
+        <button id="scan-again" class="btn ghost small">Scan Again</button>
+        <span id="dl-summary" class="faint small-text"></span>
+        <button id="open-manager" class="btn ghost small">Open Download Manager</button>
+      </div>
+    </footer>
+    <script src="popup.js" type="module"></script>
+  </body>
+</html>

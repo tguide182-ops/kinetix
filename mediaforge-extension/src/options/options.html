@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MediaForge — Settings</title>
+    <link rel="stylesheet" href="../ui/base.css" />
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="top">
+        <div class="logo" aria-hidden="true">M</div>
+        <div class="brand">
+          <h1>Settings</h1>
+          <p class="faint">MediaForge Downloader</p>
+        </div>
+        <span id="saved" class="saved" role="status" aria-live="polite"></span>
+      </header>
+
+      <form id="form" novalidate>
+        <section class="card group">
+          <h2>Downloads</h2>
+          <div class="field">
+            <label for="downloadFolder">Download folder</label>
+            <div>
+              <input type="text" id="downloadFolder" name="downloadFolder" placeholder="Downloads root" />
+              <p class="hint">A sub-folder inside your browser's Downloads directory, e.g. <span class="mono">MediaForge</span> or <span class="mono">Videos/Clips</span>. Leave empty for the Downloads folder itself.</p>
+            </div>
+          </div>
+          <div class="field check"><input type="checkbox" id="askWhereToSave" name="askWhereToSave" /><label for="askWhereToSave">Ask where to save each file</label></div>
+          <div class="field">
+            <label for="filenameTemplate">Filename pattern</label>
+            <div>
+              <input type="text" id="filenameTemplate" name="filenameTemplate" />
+              <p class="hint">Tokens: <span class="mono">{title}</span> <span class="mono">{quality}</span> <span class="mono">{site}</span> <span class="mono">{date}</span>. Must include <span class="mono">{title}</span>.</p>
+            </div>
+          </div>
+          <div class="field">
+            <label for="maxConcurrentDownloads">Maximum concurrent downloads</label>
+            <input type="number" id="maxConcurrentDownloads" name="maxConcurrentDownloads" min="1" max="8" />
+          </div>
+          <div class="field">
+            <label for="maxRetries">Maximum retries</label>
+            <div>
+              <input type="number" id="maxRetries" name="maxRetries" min="0" max="10" />
+              <p class="hint">Transient network failures are retried with exponential backoff (1 s, 2 s, 4 s, 8 s…).</p>
+            </div>
+          </div>
+          <div class="field">
+            <label for="segmentConcurrency">Parallel segment requests (streams)</label>
+            <input type="number" id="segmentConcurrency" name="segmentConcurrency" min="1" max="12" />
+          </div>
+          <div class="field check">
+            <input type="checkbox" id="autoDownload" name="autoDownload" />
+            <label for="autoDownload">Automatically download detected media files <span class="hint inline">(direct files only, max 5 per page; streams are never downloaded automatically)</span></label>
+          </div>
+        </section>
+
+        <section class="card group">
+          <h2>Quality</h2>
+          <div class="field">
+            <label for="preferredVideoQuality">Preferred video quality</label>
+            <select id="preferredVideoQuality" name="preferredVideoQuality">
+              <option value="highest">Highest available</option>
+              <option value="auto">Auto</option>
+              <option value="2160p">2160p (4K)</option>
+              <option value="1440p">1440p</option>
+              <option value="1080p">1080p</option>
+              <option value="720p">720p</option>
+              <option value="480p">480p</option>
+              <option value="360p">360p</option>
+              <option value="audio">Audio only</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="preferredAudioQuality">Preferred audio quality</label>
+            <select id="preferredAudioQuality" name="preferredAudioQuality">
+              <option value="highest">Highest</option>
+              <option value="balanced">Balanced</option>
+              <option value="lowest">Smallest</option>
+            </select>
+          </div>
+        </section>
+
+        <section class="card group">
+          <h2>Detection</h2>
+          <div class="field check"><input type="checkbox" id="autoDetect" name="autoDetect" /><label for="autoDetect">Auto-detect media while browsing</label></div>
+          <div class="field check"><input type="checkbox" id="showFloatingPanel" name="showFloatingPanel" /><label for="showFloatingPanel">Show floating media panel on pages</label></div>
+          <div class="field">
+            <label for="excluded-input">Sites excluded from scanning</label>
+            <div>
+              <div class="add-row">
+                <input type="text" id="excluded-input" placeholder="example.com" autocomplete="off" />
+                <button type="button" id="excluded-add" class="btn">Add</button>
+              </div>
+              <p id="excluded-error" class="hint error" role="alert"></p>
+              <ul id="excluded-list" class="domain-list" aria-label="Excluded sites"></ul>
+            </div>
+          </div>
+          <div class="field">
+            <label>Floating panel disabled on</label>
+            <ul id="panel-list" class="domain-list" aria-label="Sites where the floating panel is disabled"></ul>
+          </div>
+        </section>
+
+        <section class="card group">
+          <h2>Appearance &amp; notifications</h2>
+          <div class="field">
+            <label for="theme">Theme</label>
+            <select id="theme" name="theme">
+              <option value="system">System</option>
+              <option value="dark">Dark</option>
+              <option value="light">Light</option>
+            </select>
+          </div>
+          <div class="field check"><input type="checkbox" id="showNotifications" name="showNotifications" /><label for="showNotifications">Show notifications when downloads finish or fail</label></div>
+        </section>
+
+        <section class="card group">
+          <h2>Privacy &amp; diagnostics</h2>
+          <p class="muted privacy">
+            MediaForge works entirely on your device. It never sends your browsing history, detected media URLs or page
+            contents to any server, and it never reads or stores cookies, passwords or authorization headers. Detected
+            media lists live in memory for the current browser session only.
+          </p>
+          <p class="muted privacy">
+            DRM-protected or encrypted media, and media behind access controls you cannot otherwise reach, are intentionally
+            unsupported.
+          </p>
+          <div class="field check"><input type="checkbox" id="debugLogging" name="debugLogging" /><label for="debugLogging">Enable debug logging (shows technical error details)</label></div>
+          <div id="debug-box" class="debug" hidden>
+            <div class="add-row">
+              <button type="button" id="debug-refresh" class="btn small">Refresh log</button>
+              <button type="button" id="debug-clear" class="btn small ghost">Clear log</button>
+            </div>
+            <pre id="debug-log" class="mono log" tabindex="0" aria-label="Debug log"></pre>
+          </div>
+          <div class="add-row">
+            <button type="button" id="reset" class="btn ghost danger">Reset all settings</button>
+          </div>
+        </section>
+      </form>
+    </div>
+    <script src="options.js" type="module"></script>
+  </body>
+</html>

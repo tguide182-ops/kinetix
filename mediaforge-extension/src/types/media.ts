@@ -123,7 +123,7 @@ export interface StreamAnalysis {
   errorCode?: string;
 }
 
-/** User-facing quality choice. */
-export type QualityPreference = 'auto' | 'highest' | '2160p' | '1440p' | '1080p' | '720p' | '480p' | '360p' | 'audio';
+/** User-facing quality choice: auto, highest, audio only, or a resolution label such as "720p". */
+export type QualityPreference = 'auto' | 'highest' | 'audio' | `${number}p`;
 
 export type AudioQualityPreference = 'highest' | 'balanced' | 'lowest';

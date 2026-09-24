@@ -1,10 +1,9 @@
 import type { DownloadJob, DownloadRequest, StreamPlan } from './download';
 import type { MediaCandidate, MediaResource } from './media';
-import type { Settings } from './settings';
 
 /** Messages from content scripts to the background service worker. */
 export type ContentToBackground =
-  | { type: 'MEDIA_CANDIDATES'; candidates: MediaCandidate[]; pageUrl: string; pageTitle: string }
+  | { type: 'MEDIA_CANDIDATES'; candidates: MediaCandidate[]; pageUrl: string; pageTitle: string; posterHint?: string }
   | { type: 'PAGE_NAVIGATED'; url: string; title: string }
   | { type: 'PAGE_EME_ACTIVE' }
   | { type: 'PANEL_DOWNLOAD'; mediaId: string }
@@ -53,8 +52,8 @@ export type BackgroundPush =
 /** Messages from the background into a tab's content script. */
 export type BackgroundToContent =
   | { type: 'RESCAN' }
-  | { type: 'PANEL_MEDIA'; media: MediaResource[] }
-  | { type: 'SETTINGS_CHANGED'; settings: Settings };
+  | { type: 'DOWNLOAD_BLOB'; url: string; filename: string }
+  | { type: 'PANEL_MEDIA'; media: MediaResource[] };
 
 export interface TabMediaResponse {
   tabId: number;
