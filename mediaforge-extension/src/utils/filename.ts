@@ -89,6 +89,11 @@ export interface FilenameInput {
 
 const GENERIC_STEMS = /^(index|video|audio|media|master|playlist|manifest|stream|file|download|play|source|default|main|output|chunklist.*|[0-9a-f]{16,}|[0-9a-z_-]{24,})$/i;
 
+/** True for URL file names that say nothing about the content ("master", "index", hashes). */
+export function isGenericStem(stem: string): boolean {
+  return !stem || GENERIC_STEMS.test(stem);
+}
+
 /**
  * Build a clean, safe filename such as "Example Documentary - 1080p.mp4".
  * Title priority: media title → page title → URL filename (query parameters are
@@ -96,7 +101,7 @@ const GENERIC_STEMS = /^(index|video|audio|media|master|playlist|manifest|stream
  */
 export function buildFilename(input: FilenameInput): string {
   const urlStem = stemFromUrl(input.mediaUrl);
-  const usableStem = urlStem && !GENERIC_STEMS.test(urlStem) ? urlStem.replace(/[_+]+/g, ' ') : '';
+  const usableStem = !isGenericStem(urlStem) ? urlStem.replace(/[_+]+/g, ' ') : '';
   const title =
     cleanPageTitle(input.mediaTitle, input.pageUrl) ||
     cleanPageTitle(input.pageTitle, input.pageUrl) ||

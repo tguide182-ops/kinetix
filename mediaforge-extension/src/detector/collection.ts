@@ -209,7 +209,7 @@ export class MediaCollection {
 
 /** Sort order: streams and larger/higher-quality media first. */
 function rank(r: MediaResource): number {
-  let s = 0;
+  let s = r.isProtected ? -1e13 : 0;
   if (r.type === 'hls' || r.type === 'dash') s += 4e12;
   else if (r.type === 'video') s += 3e12;
   else if (r.type === 'audio') s += 2e12;

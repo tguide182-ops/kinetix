@@ -2,7 +2,7 @@
   "name": "mediaforge-downloader",
   "version": "1.0.0",
   "private": true,
-  "description": "MediaForge Downloader — privacy-first media detection and download manager Chrome extension (Manifest V3).",
+  "description": "MediaForge Downloader \u2014 privacy-first media detection and download manager Chrome extension (Manifest V3).",
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
@@ -13,7 +13,8 @@
     "test:watch": "vitest",
     "verify": "node scripts/verify-manifest.mjs",
     "check": "npm run typecheck && npm test && npm run build && npm run verify",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "e2e": "node e2e/run.mjs"
   },
   "license": "Apache-2.0",
   "devDependencies": {

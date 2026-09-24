@@ -44,13 +44,15 @@ const flush = debounce(
 
 function enqueue(cands: MediaCandidate[]): void {
   for (const c of cands) {
+    // One entry per detector and URL, so the background can record every detection method.
+    const key = `${c.method}|${c.url}`;
     // Skip exact repeats; resend when new metadata (e.g. dimensions) appears.
-    const sig = `${c.method}|${c.width ?? ''}|${c.height ?? ''}|${c.duration ?? ''}|${c.posterUrl ?? ''}|${c.mimeType ?? ''}`;
-    if (sent.get(c.url) === sig) continue;
+    const sig = `${c.width ?? ''}|${c.height ?? ''}|${c.duration ?? ''}|${c.posterUrl ?? ''}|${c.mimeType ?? ''}|${c.title ?? ''}`;
+    if (sent.get(key) === sig) continue;
     if (sent.size > 2000) sent.clear();
-    sent.set(c.url, sig);
-    const prev = queued.get(c.url);
-    queued.set(c.url, prev ? { ...prev, ...c } : c);
+    sent.set(key, sig);
+    const prev = queued.get(key);
+    queued.set(key, prev ? { ...prev, ...c } : c);
   }
   if (queued.size) flush();
 }

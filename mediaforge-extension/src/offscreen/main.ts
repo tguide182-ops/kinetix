@@ -87,8 +87,10 @@ chrome.runtime.onMessage.addListener((msg: BackgroundToOffscreen, sender) => {
   if (sender.id !== chrome.runtime.id || !msg || msg.target !== 'offscreen') return false;
   switch (msg.type) {
     case 'STREAM_START':
-      // Duplicate start after a background restart: the job is already running.
-      if (!jobs.has(msg.jobId)) void runJob(msg.jobId, msg.plan, Math.max(1, Math.min(12, msg.concurrency)), Math.max(0, Math.min(10, msg.maxRetries)));
+      // Duplicate start after a background restart: the job is already running —
+      // the background wants it active, so make sure it is not left paused.
+      if (jobs.has(msg.jobId)) jobs.get(msg.jobId)!.gate.resume();
+      else void runJob(msg.jobId, msg.plan, Math.max(1, Math.min(12, msg.concurrency)), Math.max(0, Math.min(10, msg.maxRetries)));
       break;
     case 'STREAM_PAUSE':
       jobs.get(msg.jobId)?.gate.pause();

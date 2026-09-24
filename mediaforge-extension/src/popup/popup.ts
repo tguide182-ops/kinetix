@@ -1,6 +1,7 @@
 import { loadSettings } from '../storage/settings';
 import type { BackgroundPush, DownloadJob, MediaResource, QualityPreference, Settings, TabMediaResponse } from '../types';
 import { request, subscribe } from '../ui/api';
+import { mediaDisplayTitle, mediaTypeLabel } from '../ui/labels';
 import { applyTheme, clear, h } from '../utils/dom';
 import { formatBytes, formatBitrate, formatDuration } from '../utils/format';
 import { displayQuality } from '../utils/quality';
@@ -22,20 +23,10 @@ const analyzing = new Set<string>();
 
 /* ------------------------------ helpers ------------------------------ */
 
-function typeLabel(m: MediaResource): string {
-  if (m.type === 'hls') return 'HLS';
-  if (m.type === 'dash') return 'DASH';
-  return m.format === 'unknown' ? (m.type === 'audio' ? 'Audio' : 'Video') : m.format.toUpperCase();
-}
-
 function estimatedSize(m: MediaResource): string {
   if (m.size) return formatBytes(m.size);
   if (m.isStream && m.bitrate && m.duration) return formatBytes((m.bitrate / 8) * m.duration, true);
   return '';
-}
-
-function titleOf(m: MediaResource): string {
-  return m.title ?? (m.isStream ? m.pageTitle : undefined) ?? m.filename ?? m.pageTitle ?? 'Untitled media';
 }
 
 function notice(text: string, kind: '' | 'warning' | 'danger' = ''): HTMLElement {
@@ -114,7 +105,7 @@ function streamChooser(m: MediaResource): HTMLElement | null {
 }
 
 function mediaCard(m: MediaResource): HTMLElement {
-  const meta = [displayQuality(m.qualityLabel), typeLabel(m), estimatedSize(m), formatDuration(m.duration)].filter(Boolean).join(' • ');
+  const meta = [displayQuality(m.qualityLabel), mediaTypeLabel(m), estimatedSize(m), formatDuration(m.duration)].filter(Boolean).join(' • ');
   const badges = h('div', { class: 'badges' });
   if (m.isStream) badges.append(h('span', { class: 'badge accent', text: 'Stream' }));
   if (m.isProtected) badges.append(h('span', { class: 'badge danger', text: 'Protected' }));
@@ -132,14 +123,14 @@ function mediaCard(m: MediaResource): HTMLElement {
     class: 'btn primary small',
     text: 'Download',
     disabled: blocked || (m.isStream && !m.analysis),
-    aria: { label: `Download ${titleOf(m)}` },
+    aria: { label: `Download ${mediaDisplayTitle(m)}` },
     on: { click: () => void download(m) },
   });
 
   return h(
     'article',
     { class: 'card media' },
-    h('div', { class: 'media-head' }, thumb(m), h('div', { class: 'media-info' }, h('div', { class: 'media-title truncate', text: titleOf(m), title: titleOf(m) }), h('div', { class: 'media-meta', text: meta }), badges)),
+    h('div', { class: 'media-head' }, thumb(m), h('div', { class: 'media-info' }, h('div', { class: 'media-title truncate', text: mediaDisplayTitle(m), title: mediaDisplayTitle(m) }), h('div', { class: 'media-meta', text: meta }), badges)),
     streamChooser(m),
     h('div', { class: 'media-actions' }, status, btn),
   );
@@ -264,7 +255,9 @@ async function init(): Promise<void> {
   $('scan-again').addEventListener('click', () => void rescan());
   downloadAllBtn.addEventListener('click', () => void downloadAll());
 
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  // "?tab=<id>" lets the popup be opened as a page for a specific tab (automation, accessibility tools).
+  const forced = Number(new URLSearchParams(location.search).get('tab'));
+  const [tab] = Number.isInteger(forced) && forced > 0 ? [await chrome.tabs.get(forced).catch(() => undefined)] : await chrome.tabs.query({ active: true, currentWindow: true });
   tabId = tab?.id;
   if (tabId === undefined || !tab?.url || !/^https?:/.test(tab.url)) {
     content.setAttribute('aria-busy', 'false');

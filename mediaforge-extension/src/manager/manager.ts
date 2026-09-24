@@ -33,8 +33,8 @@ function act(jobId: string, action: 'pause' | 'resume' | 'cancel' | 'retry' | 'r
   void request({ type: 'DOWNLOAD_ACTION', jobId, action });
 }
 
-function button(label: string, onClick: () => void, cls = 'btn small'): HTMLButtonElement {
-  return h('button', { class: cls, text: label, on: { click: onClick } });
+function button(label: string, onClick: () => void, cls = 'btn small', key?: string): HTMLButtonElement {
+  return h('button', { class: cls, text: label, on: { click: onClick }, ...(key ? { data: { focusKey: key } } : {}) });
 }
 
 function progressBar(j: DownloadJob): HTMLElement {
@@ -66,12 +66,12 @@ function jobRow(j: DownloadJob): HTMLElement {
   );
 
   const actions = h('div', { class: 'job-actions' });
-  if (j.status === 'active' && j.canPause) actions.append(button('Pause', () => act(j.id, 'pause')));
-  if (j.status === 'paused') actions.append(button('Resume', () => act(j.id, 'resume')));
-  if (j.status === 'failed' || j.status === 'cancelled') actions.append(button('Retry', () => act(j.id, 'retry')));
-  if (j.status === 'completed' && j.chromeDownloadIds.length) actions.append(button('Show in folder', () => act(j.id, 'show')));
-  if (j.status === 'active' || j.status === 'queued' || j.status === 'paused') actions.append(button('Cancel', () => act(j.id, 'cancel'), 'btn small danger'));
-  else actions.append(button('Remove', () => act(j.id, 'remove'), 'btn small ghost'));
+  if (j.status === 'active' && j.canPause) actions.append(button('Pause', () => act(j.id, 'pause'), 'btn small', `${j.id}:pause`));
+  if (j.status === 'paused') actions.append(button('Resume', () => act(j.id, 'resume'), 'btn small', `${j.id}:resume`));
+  if (j.status === 'failed' || j.status === 'cancelled') actions.append(button('Retry', () => act(j.id, 'retry'), 'btn small', `${j.id}:retry`));
+  if (j.status === 'completed' && j.chromeDownloadIds.length) actions.append(button('Show in folder', () => act(j.id, 'show'), 'btn small', `${j.id}:show`));
+  if (j.status === 'active' || j.status === 'queued' || j.status === 'paused') actions.append(button('Cancel', () => act(j.id, 'cancel'), 'btn small danger', `${j.id}:cancel`));
+  else actions.append(button('Remove', () => act(j.id, 'remove'), 'btn small ghost', `${j.id}:remove`));
 
   const errorBox =
     j.errorMessage && j.status !== 'completed'
@@ -89,11 +89,19 @@ function jobRow(j: DownloadJob): HTMLElement {
 }
 
 function render(): void {
+  // Live updates rebuild the list; restore keyboard focus to the same control afterwards.
+  const focusKey = (document.activeElement as HTMLElement | null)?.dataset?.focusKey;
+  renderInner();
+  if (focusKey) (document.querySelector(`[data-focus-key="${CSS.escape(focusKey)}"]`) as HTMLElement | null)?.focus();
+}
+
+function renderInner(): void {
   clear(filters);
   for (const f of FILTERS) {
     const n = jobs.filter((j) => f.match(j.status)).length;
     const b = h('button', {
       class: 'filter',
+      data: { focusKey: `filter:${f.id}` },
       role: 'tab',
       aria: { selected: String(filter === f.id) },
       on: {

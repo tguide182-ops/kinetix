@@ -2,10 +2,11 @@ import type { MediaResource, Result } from '../types';
 import { formatBytes } from '../utils/format';
 import { displayQuality } from '../utils/quality';
 import { h, clear } from '../utils/dom';
+import { mediaDisplayTitle, mediaTypeLabel } from '../ui/labels';
 
 const STYLE = `
 :host { all: initial; }
-.mf { position: fixed; right: 16px; bottom: 16px; z-index: 2147483646; width: 300px; max-width: calc(100vw - 32px);
+.mf { position: fixed; right: 16px; bottom: 16px; z-index: 2147483646; width: 330px; max-width: calc(100vw - 32px);
   font: 13px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #e8e8f0; background: #16161d;
   border: 1px solid #2c2c3a; border-radius: 12px; box-shadow: 0 8px 28px rgba(0,0,0,.35); overflow: hidden; }
 .mf.min { width: auto; }
@@ -53,8 +54,7 @@ function summary(media: MediaResource[]): string {
 }
 
 function describe(m: MediaResource): string {
-  const format = m.type === 'hls' ? 'HLS' : m.type === 'dash' ? 'DASH' : m.format === 'unknown' ? m.type.toUpperCase() : m.format.toUpperCase();
-  return [displayQuality(m.qualityLabel), format, formatBytes(m.size)].filter(Boolean).join(' • ');
+  return [displayQuality(m.qualityLabel), mediaTypeLabel(m), formatBytes(m.size)].filter(Boolean).join(' • ');
 }
 
 /** Optional in-page panel. Lives in a closed shadow root so page CSS/JS cannot restyle or read it. */
@@ -96,7 +96,7 @@ export class FloatingPanel {
       'header',
       {},
       h('span', { class: 'brand', text: 'MEDIAFORGE' }),
-      h('span', { class: 'count', text: this.minimized ? String(this.media.length) : `Detected: ${summary(this.media)}` }),
+      h('span', { class: 'count', text: this.minimized ? String(this.media.length) : summary(this.media), title: summary(this.media) }),
       h('button', {
         class: 'icon',
         title: this.minimized ? 'Expand' : 'Minimize',
@@ -112,7 +112,7 @@ export class FloatingPanel {
     const status = h('div', { class: 'status', role: 'status', aria: { live: 'polite' } });
     const list = h('ul');
     for (const m of this.media.slice(0, 20)) {
-      const btn = h('button', { class: 'dl', text: 'Download', aria: { label: `Download ${m.title ?? m.filename ?? 'media'}` } });
+      const btn = h('button', { class: 'dl', text: 'Download', aria: { label: `Download ${mediaDisplayTitle(m)}` } });
       btn.addEventListener('click', async () => {
         btn.disabled = true;
         status.textContent = 'Starting download…';
@@ -121,7 +121,7 @@ export class FloatingPanel {
         btn.disabled = false;
       });
       list.append(
-        h('li', {}, h('div', { class: 'meta' }, h('div', { class: 'title', text: m.title ?? m.filename ?? m.pageTitle ?? 'Untitled media', title: m.title ?? '' }), h('div', { class: 'sub', text: describe(m) })), btn),
+        h('li', {}, h('div', { class: 'meta' }, h('div', { class: 'title', text: mediaDisplayTitle(m), title: mediaDisplayTitle(m) }), h('div', { class: 'sub', text: describe(m) })), btn),
       );
     }
     const footer = h(

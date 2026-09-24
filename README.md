@@ -134,5 +134,11 @@ npm start
 
 ---
 
+## Also in this repository: MediaForge Downloader
+
+[`mediaforge-extension/`](mediaforge-extension/README.md) is a separate, self-contained Chrome (Manifest V3) extension for privacy-first media detection and downloading (direct files, HLS, DASH). It has its own `package.json`, build and tests and does not depend on the Kinetix app.
+
+---
+
 ## License
 Apache-2.0

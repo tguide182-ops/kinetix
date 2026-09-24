@@ -23,6 +23,12 @@ export class PageObserver {
   private perfObserver?: PerformanceObserver;
   private pending = new Set<Element>();
   private lastUrl = location.href.split('#')[0]!;
+  /**
+   * Resource Timing keeps entries from before an SPA navigation; after a route
+   * change only entries that started shortly before it (players often start
+   * loading just before pushState) or later are considered.
+   */
+  private perfCutoff = 0;
   private active = false;
   private readonly flushPending = debounce(() => this.processPending(), 300, 1500);
   private readonly checkUrl = debounce(() => this.detectNavigation(), 150);
@@ -72,7 +78,7 @@ export class PageObserver {
   fullScan(): void {
     const c = document.documentElement ? scanRoot(document, this.blobs) : [];
     try {
-      c.push(...candidatesFromPerformance(performance.getEntriesByType('resource')));
+      c.push(...candidatesFromPerformance(performance.getEntriesByType('resource').filter((e) => e.startTime >= this.perfCutoff)));
     } catch {
       /* ignore */
     }
@@ -90,6 +96,7 @@ export class PageObserver {
     const now = location.href.split('#')[0]!;
     if (now === this.lastUrl) return;
     this.lastUrl = now;
+    this.perfCutoff = Math.max(0, performance.now() - 1500);
     this.cb.onNavigate(location.href);
     // Let the new view render, then rescan once.
     setTimeout(() => this.fullScan(), 800);
