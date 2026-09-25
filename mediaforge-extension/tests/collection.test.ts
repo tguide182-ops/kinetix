@@ -32,7 +32,7 @@ describe('MediaCollection deduplication', () => {
   it('merges the same resource seen by several detectors', () => {
     const c = new MediaCollection();
     const cands: MediaCandidate[] = [
-      { url: 'https://cdn.a.com/v/clip.mp4?Expires=1&Signature=a', method: 'network', mimeType: 'video/mp4', size: 1000 },
+      { url: 'https://cdn.a.com/v/clip.mp4?Expires=1&Signature=a', method: 'network', mimeType: 'video/mp4', size: 100_000 },
       { url: 'http://CDN.a.com/v/clip.mp4?Expires=2&Signature=b#t=5', method: 'dom', title: 'Clip', width: 1920, height: 1080 },
       { url: 'https://cdn.a.com/v/clip.mp4?utm_campaign=z', method: 'performance' },
     ];
@@ -41,7 +41,7 @@ describe('MediaCollection deduplication', () => {
     expect(c.size).toBe(1);
     const item = c.list()[0]!;
     expect(item.detectionMethods.sort()).toEqual(['dom', 'network', 'performance']);
-    expect(item).toMatchObject({ title: 'Clip', size: 1000, qualityLabel: '1080p' });
+    expect(item).toMatchObject({ title: 'Clip', size: 100_000, qualityLabel: '1080p' });
   });
 
   it('does not merge genuinely different media', () => {
@@ -56,6 +56,22 @@ describe('MediaCollection deduplication', () => {
       ctx,
     );
     expect(c.size).toBe(4);
+  });
+
+  it('drops interface sounds and beacons once their small size is known', () => {
+    const c = new MediaCollection();
+    // Seen first without a size (e.g. Resource Timing on a cross-origin file)...
+    c.addCandidates([{ url: 'https://www.gstatic.com/sounds/success.mp3', method: 'performance' }], ctx);
+    expect(c.size).toBe(1);
+    // ...then the network observer reports 12 KB: it is removed and stays hidden.
+    const r = c.addCandidates([{ url: 'https://www.gstatic.com/sounds/success.mp3', method: 'network', size: 12_000 }], ctx);
+    expect(r.updated).toHaveLength(1);
+    expect(c.size).toBe(0);
+    c.addCandidates([{ url: 'https://www.gstatic.com/sounds/success.mp3', method: 'dom' }], ctx);
+    expect(c.size).toBe(0);
+    // Streams are never dropped for being small (manifests are tiny).
+    c.addCandidates([{ url: 'https://a.com/master.m3u8', method: 'network', size: 400 }], ctx);
+    expect(c.size).toBe(1);
   });
 
   it('reports no change for identical re-detections', () => {

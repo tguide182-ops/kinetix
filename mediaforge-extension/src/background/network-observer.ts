@@ -1,8 +1,6 @@
 import type { MediaCandidate } from '../types';
 import { classifyMedia } from '../utils/mime';
 
-/** Beacons/probes below this size are not listed as media (manifests are exempt). */
-const MIN_MEDIA_BYTES = 16 * 1024;
 
 function header(headers: chrome.webRequest.HttpHeader[] | undefined, name: string): string | undefined {
   const h = headers?.find((x) => x.name.toLowerCase() === name);
@@ -31,7 +29,8 @@ export function candidateFromResponse(d: chrome.webRequest.OnHeadersReceivedDeta
   const cls = classifyMedia(d.url, mime);
   if (!cls || cls.isSegment || cls.type === 'unknown') return null;
   const size = sizeFromHeaders(d.responseHeaders, d.statusCode);
-  if (!cls.isStream && size !== undefined && size < MIN_MEDIA_BYTES) return null;
+  // Small files are still reported (with their size) so the collection can
+  // drop an entry another detector already listed without knowing its size.
   const c: MediaCandidate = { url: d.url, method: 'network' };
   if (mime) c.mimeType = mime;
   if (size !== undefined && !cls.isStream) c.size = size;

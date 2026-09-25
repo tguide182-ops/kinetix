@@ -11,6 +11,8 @@ export interface Settings {
   filenameTemplate: string;
   autoDownload: boolean;
   showFloatingPanel: boolean;
+  /** In-page Download button attached to playing videos. */
+  showVideoButton: boolean;
   maxConcurrentDownloads: number;
   maxRetries: number;
   /** Parallel segment requests per stream download. */

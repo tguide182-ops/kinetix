@@ -67,6 +67,7 @@ check('dynamically inserted webm detected', find('/media/late.webm'));
 check('HLS via fetch detected', find('/hls/master.m3u8')?.type === 'hls');
 check('DASH via XHR detected', find('/dash/manifest.mpd')?.type === 'dash');
 check('blob-backed media detected', r.data.media.some((m) => m.isBlob));
+check('tiny UI sounds (YouTube-style) are not listed', hits.some((h) => h.startsWith('/sounds/')) && !r.data.media.some((m) => m.url.includes('/sounds/')), hits.filter((h) => h.startsWith('/sounds/')).join(','));
 check('no segments listed', !r.data.media.some((m) => /seg\d|\.m4s/.test(m.url)));
 check('page title', r.data.pageTitle?.startsWith('Example Documentary'));
 
@@ -104,11 +105,26 @@ for (let i = 0; i < 40; i++) {
 }
 for (const j of jobs) console.log(`  job ${j.filename} ${j.status} ${j.bytesReceived}/${j.totalBytes ?? '?'} ${j.errorMessage ?? ''} ${j.errorDetail ?? ''}`);
 const byName = (s) => jobs.find((j) => j.filename.endsWith(s));
-check('direct download completed', byName('/Example Documentary.mp4')?.status === 'completed' && byName('/Example Documentary.mp4')?.mode === 'direct');
+check('direct download completed', jobs.some((j) => j.filename.endsWith('/Example Documentary.mp4') && j.status === 'completed' && j.mode === 'direct'));
 check('HLS stream completed', jobs.some((j) => j.mode === 'stream' && j.mediaType === 'hls' && j.status === 'completed'));
 check('DASH stream completed', jobs.some((j) => j.mode === 'stream' && j.mediaType === 'dash' && j.status === 'completed'));
 check('403 reported as access error', jobs.some((j) => j.status === 'failed' && j.errorMessage === 'Media URL could not be accessed.'));
 check('filename format', jobs.some((j) => j.filename === 'MediaForge/Example Documentary.mp4'), jobs.map((j) => j.filename).join(' | '));
+
+// On-video Download button: click it, pick the first quality, expect a new job.
+await page.bringToFront();
+await page.setViewportSize({ width: 1100, height: 700 });
+await page.waitForTimeout(800);
+check('download button attached to the video', (await page.locator('mediaforge-video-button').count()) === 1);
+const vr = await page.locator('#v1').boundingBox();
+const before = (await send({ type: 'GET_DOWNLOADS' })).data.length;
+await page.mouse.click(vr.x + vr.width - 60, vr.y + 26);
+await page.waitForTimeout(1500);
+await shot(page, 'video-button.png');
+await page.mouse.click(vr.x + vr.width - 150, vr.y + 26 + 24 + 6 + 30 + 18);
+await page.waitForTimeout(1500);
+const afterJobs = (await send({ type: 'GET_DOWNLOADS' })).data;
+check('choosing a quality from the video button starts a download', afterJobs.length === before + 1, afterJobs[0]?.filename);
 
 const files = readdirSync(downloadsDir).map((f) => `${f} ${statSync(join(downloadsDir, f)).size}`);
 console.log('downloaded files:', files);

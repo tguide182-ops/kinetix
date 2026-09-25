@@ -39,15 +39,16 @@ const drmMpd = mpd.replace('<AdaptationSet contentType="video" mimeType="video/m
 
 const page = `<!doctype html><html><head><title>Example Documentary | Testsite</title></head><body>
 <h1>Test page</h1>
-<figure><video id="v1" src="/media/clip.mp4?utm_source=news" poster="/poster.png" title="Example Documentary" controls></video><figcaption>Caption</figcaption></figure>
+<figure><video id="v1" src="/media/clip.mp4?utm_source=news" poster="/poster.png" title="Example Documentary" controls width="640" height="360"></video><figcaption>Caption</figcaption></figure>
 <a href="/media/song.mp3">Song download</a>
 <a href="/about.html">About</a>
 <script>
 setTimeout(() => { const v = document.createElement('video'); v.src = '/media/late.webm'; document.body.appendChild(v); }, 500);
 setTimeout(() => { fetch('/hls/master.m3u8').then(r => r.text()); }, 700);
 setTimeout(() => { const x = new XMLHttpRequest(); x.open('GET', '/dash/manifest.mpd'); x.send(); }, 900);
+['success','failure','open','no_input'].forEach((n) => { const a = new Audio('/sounds/' + n + '.mp3'); a.preload = 'auto'; a.load(); });
 setTimeout(() => { fetch('/drm/manifest.mpd').then(r => r.text()); }, 1000);
-setTimeout(() => { const b = new Blob([new Uint8Array(20000)], {type:'video/mp4'}); const u = URL.createObjectURL(b); const v = document.createElement('video'); v.src = u; document.body.appendChild(v); }, 1100);
+setTimeout(() => { const b = new Blob([new Uint8Array(200000)], {type:'video/mp4'}); const u = URL.createObjectURL(b); const v = document.createElement('video'); v.src = u; document.body.appendChild(v); }, 1100);
 </script></body></html>`;
 
 const spa = `<!doctype html><html><head><title>SPA Home</title></head><body><div id="app"><video src="/media/home.mp4"></video></div>
@@ -67,9 +68,10 @@ export function start(port = 0) {
     if (p === '/' || p === '/index.html') return send('text/html', page);
     if (p.startsWith('/spa')) return send('text/html', spa);
     if (p === '/poster.png') return send('image/png', png);
-    if (p === '/media/clip.mp4' || p === '/media/home.mp4' || p === '/media/two.mp4') return send('video/mp4', mp4(60000));
-    if (p === '/media/late.webm') return send('video/webm', webm(40000));
-    if (p === '/media/song.mp3') return send('audio/mpeg', Buffer.concat([Buffer.from('ID3'), Buffer.alloc(30000)]));
+    if (p === '/media/clip.mp4' || p === '/media/home.mp4' || p === '/media/two.mp4') return send('video/mp4', mp4(300000));
+    if (p === '/media/late.webm') return send('video/webm', webm(200000));
+    if (p === '/media/song.mp3') return send('audio/mpeg', Buffer.concat([Buffer.from('ID3'), Buffer.alloc(200000)]));
+    if (p.startsWith('/sounds/')) return send('audio/mpeg', Buffer.concat([Buffer.from('ID3'), Buffer.alloc(12000)]));
     if (p === '/media/forbidden.mp4') return send('text/plain', 'no', 403);
     if (p === '/hls/master.m3u8') return send('application/vnd.apple.mpegurl', master);
     if (/^\/hls\/\d+\/index\.m3u8$/.test(p)) return send('application/vnd.apple.mpegurl', media());

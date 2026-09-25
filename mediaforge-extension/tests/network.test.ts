@@ -35,9 +35,12 @@ describe('network observer', () => {
     );
   });
 
-  it('ignores segments, tiny beacons, errors, non-GET and non-tab requests', () => {
+  it('reports small files with their size so the collection can drop them', () => {
+    expect(candidateFromResponse(details('https://a.com/px.mp4', { 'content-type': 'video/mp4', 'content-length': '200' }))?.size).toBe(200);
+  });
+
+  it('ignores segments, errors, non-GET and non-tab requests', () => {
     expect(candidateFromResponse(details('https://a.com/seg1.ts', { 'content-type': 'video/mp2t' }))).toBeNull();
-    expect(candidateFromResponse(details('https://a.com/px.mp4', { 'content-type': 'video/mp4', 'content-length': '200' }))).toBeNull();
     expect(candidateFromResponse(details('https://a.com/x.mp4', { 'content-type': 'video/mp4' }, { statusCode: 403 }))).toBeNull();
     expect(candidateFromResponse(details('https://a.com/x.mp4', {}, { method: 'POST' }))).toBeNull();
     expect(candidateFromResponse(details('https://a.com/x.mp4', {}, { tabId: -1 }))).toBeNull();

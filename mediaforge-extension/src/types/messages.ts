@@ -6,7 +6,8 @@ export type ContentToBackground =
   | { type: 'MEDIA_CANDIDATES'; candidates: MediaCandidate[]; pageUrl: string; pageTitle: string; posterHint?: string }
   | { type: 'PAGE_NAVIGATED'; url: string; title: string }
   | { type: 'PAGE_EME_ACTIVE' }
-  | { type: 'PANEL_DOWNLOAD'; mediaId: string }
+  | { type: 'PANEL_DOWNLOAD'; mediaId: string; quality?: string }
+  | { type: 'OVERLAY_GET_OPTIONS'; src?: string }
   | { type: 'PANEL_GET_MEDIA' }
   | { type: 'OPEN_POPUP_MANAGER' };
 
@@ -53,7 +54,28 @@ export type BackgroundPush =
 export type BackgroundToContent =
   | { type: 'RESCAN' }
   | { type: 'DOWNLOAD_BLOB'; url: string; filename: string }
-  | { type: 'PANEL_MEDIA'; media: MediaResource[] };
+  | { type: 'PANEL_MEDIA'; media: MediaResource[] }
+  | { type: 'MEDIA_AVAILABLE'; videos: number };
+
+/** One entry in the on-video quality menu. */
+export interface VideoOption {
+  mediaId: string;
+  quality: string;
+  label: string;
+  /** Container / kind, e.g. "MP4", "HLS → TS", "Audio · M4A". */
+  detail: string;
+  size?: number;
+  /** Which video this option belongs to — set only when several videos are offered. */
+  source?: string;
+  /** True when the size is estimated from bitrate × duration. */
+  approximate: boolean;
+}
+
+export interface VideoOptionsResponse {
+  options: VideoOption[];
+  /** Why nothing is downloadable, when options is empty. */
+  message?: string;
+}
 
 export interface TabMediaResponse {
   tabId: number;

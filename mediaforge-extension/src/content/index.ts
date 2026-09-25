@@ -4,13 +4,15 @@
  * reports them to the background. Runs in every frame.
  */
 import { addDomain, loadSettings, onSettingsChanged } from '../storage/settings';
-import type { BackgroundToContent, ContentToBackground, MediaCandidate, MediaResource, Result, Settings } from '../types';
+import type { BackgroundToContent, ContentToBackground, MediaCandidate, MediaResource, Result, Settings, VideoOptionsResponse } from '../types';
 import { isHostInList } from '../utils/url';
 import { debounce } from '../utils/timing';
 import { findPoster, type BlobRegistry } from './dom-detector';
 import { parseHookMessage } from './hook-protocol';
 import { PageObserver } from './page-observer';
 import { FloatingPanel } from './panel';
+import { VideoButton } from './video-button';
+import { downloadableVideoCount } from '../detector/video-options';
 
 const isTop = window === window.top;
 const blobs: BlobRegistry = { blobs: new Map(), mse: new Set() };
@@ -18,6 +20,9 @@ let settings: Settings | undefined;
 let panel: FloatingPanel | undefined;
 let panelDismissed = false;
 let lastPanelMedia: MediaResource[] = [];
+let videoButton: VideoButton | undefined;
+let videosAvailable = 0;
+let videoButtonHidden = false;
 
 function send(msg: ContentToBackground): Promise<unknown> {
   return chrome.runtime.sendMessage(msg).catch(() => undefined);
@@ -83,6 +88,7 @@ function applySettings(s: Settings): void {
     observer.stop();
   }
   updatePanel();
+  updateVideoButton();
 }
 
 /* ------------------------- MAIN-world hook bridge ------------------ */
@@ -138,6 +144,30 @@ function updatePanel(): void {
   panel.update(lastPanelMedia);
 }
 
+/* ------------------------- on-video download button --------------- */
+
+function updateVideoButton(): void {
+  const wanted = !!settings?.showVideoButton && scanningAllowed() && !videoButtonHidden && videosAvailable > 0;
+  if (!wanted) {
+    videoButton?.destroy();
+    videoButton = undefined;
+    return;
+  }
+  if (videoButton) {
+    videoButton.refresh();
+    return;
+  }
+  videoButton = new VideoButton({
+    getOptions: async (src) => ((await send({ type: 'OVERLAY_GET_OPTIONS', ...(src ? { src } : {}) })) as VideoOptionsResponse | undefined) ?? { options: [], message: 'MediaForge is unavailable. Reload the page.' },
+    download: async (mediaId, quality) =>
+      ((await send({ type: 'PANEL_DOWNLOAD', mediaId, quality })) as Result<unknown> | undefined) ?? { ok: false, errorCode: 'INTERNAL', message: 'Extension unavailable.' },
+    hideOnPage: () => {
+      videoButtonHidden = true;
+      updateVideoButton();
+    },
+  });
+}
+
 /* ------------------------- background messages -------------------- */
 
 function saveBlob(url: string, filename: string): boolean {
@@ -170,6 +200,12 @@ chrome.runtime.onMessage.addListener((msg: BackgroundToContent, sender, sendResp
         updatePanel();
       }
       return false;
+    case 'MEDIA_AVAILABLE':
+      if (typeof msg.videos === 'number') {
+        videosAvailable = msg.videos;
+        updateVideoButton();
+      }
+      return false;
     case 'DOWNLOAD_BLOB':
       sendResponse(typeof msg.url === 'string' && typeof msg.filename === 'string' && saveBlob(msg.url, msg.filename));
       return false;
@@ -182,11 +218,15 @@ chrome.runtime.onMessage.addListener((msg: BackgroundToContent, sender, sendResp
 
 void loadSettings().then(async (s) => {
   applySettings(s);
-  if (panelWanted()) {
+  if (panelWanted() || s.showVideoButton) {
     const media = (await send({ type: 'PANEL_GET_MEDIA' })) as MediaResource[] | undefined;
     if (Array.isArray(media)) {
-      lastPanelMedia = media;
-      updatePanel();
+      videosAvailable = downloadableVideoCount(media);
+      updateVideoButton();
+      if (panelWanted()) {
+        lastPanelMedia = media;
+        updatePanel();
+      }
     }
   }
 });

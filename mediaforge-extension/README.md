@@ -30,6 +30,7 @@ A Manifest V3 Chrome extension that detects video and audio loaded by the curren
 - **Quality selection.** Auto, Highest, a specific resolution (1080p, 720p, …) or Audio only. If the exact quality is missing, it picks the best one below it, and otherwise the lowest one above. Labels are normalized to 2160p, 1440p, 1080p, 720p, 480p, 360p and 240p, including for letterboxed and portrait video. When no information is available, the label is "Unknown quality". Values are never guessed.
 - **Download manager.** Shows active, queued, paused, completed and failed downloads. You can pause, resume, retry, cancel or remove each one, and see progress, speed and ETA. Transient errors are retried with exponential backoff (1 s, 2 s, 4 s, 8 s …) up to a limit you configure.
 - **Smart filenames.** Names follow the pattern `Example Documentary - 1080p.mp4`, built from the media title, page title or URL filename. Site-name suffixes are removed. Query strings, which may hold tokens, never appear in names. Names are made safe for Windows, macOS and Linux, and duplicate names within a session get a number.
+- **Download button on the video.** A small ⬇ Download pill sits on the top-right corner of the largest visible video. It opens a quality menu, for example 1080p / 720p / Audio only, with each option's size: exact for files, ≈ estimated from bitrate × duration for streams. It only appears when that page has downloadable video, and you can turn it off in Settings or hide it for the current page.
 - **Popup.** Lists what was found on the current page, with the stream qualities available for each item. It has Download, Download All, Scan Again and Open Download Manager buttons, and dark, light and system themes.
 - **Floating page panel (optional).** Lives in a closed Shadow DOM and can be minimized, closed, or turned off for a site.
 - **Context menus.** "Download video with MediaForge", "Download audio with MediaForge", "Download media with MediaForge" (on media links only) and "Scan page for media".
@@ -181,6 +182,8 @@ MediaForge deliberately does **not** request `tabs`, `scripting`, `cookies`, `hi
 - **Stream memory.** Streams are assembled in memory as Blobs, which Chrome may page to disk. The cap is 4 GiB per download.
 - **Server checks.** Some CDNs require a page `Referer` or origin-bound cookies. Chrome may not send these on extension requests, and in that case the download fails with "Media URL could not be accessed." MediaForge does not forge headers.
 - **Restricted pages.** Content scripts do not run on `chrome://` pages, the Chrome Web Store, or other extensions' pages.
+- **Small files are ignored.** Files under 64 KB, such as a site's interface sound effects and tracking beacons, are not listed. Manifests are always kept.
+- **YouTube and similar platforms** deliver video through their own player with protected, signed stream URLs rather than downloadable files or standard manifests. MediaForge does not defeat those protections, so it offers nothing to download there.
 - **Auto-download.** It is off by default. When turned on, it only handles complete direct files of 100 KB or more, and at most 5 per page.
 
 ## Testing
@@ -207,7 +210,7 @@ The unit tests cover:
 - Settings storage and validation
 - The DOM detector (jsdom), the network observer, and hook-message validation
 
-**End-to-end smoke test (optional).** It loads `dist/` into Chromium and runs 33 checks against a local fixture site. The checks cover detection, HLS, DASH and DRM analysis, real direct and stream downloads, 403 handling, the popup, manager and options pages, the floating panel, SPA navigation, and excluded sites.
+**End-to-end smoke test (optional).** It loads `dist/` into Chromium and runs 36 checks against a local fixture site. The checks cover detection, HLS, DASH and DRM analysis, real direct and stream downloads, 403 handling, the popup, manager and options pages, the floating panel, the on-video Download button, filtering of tiny interface sounds, SPA navigation, and excluded sites.
 
 ```bash
 npm i -D playwright && npx playwright install chromium

@@ -22,6 +22,7 @@ import { clearLog, createLogger, getLogEntries, setDebugLogging } from '../utils
 import { hostnameOf, isHostInList, isHttpUrl, isSafeImageUrl } from '../utils/url';
 import { debounce, type Debounced } from '../utils/timing';
 import { parseQualityPreference } from '../utils/quality';
+import { buildVideoOptions, downloadableVideoCount } from '../detector/video-options';
 import { StreamAnalyzer } from './analyzer';
 import { installDownloadWatcher } from './chrome-downloads';
 import { createContextMenus, MENU } from './context-menus';
@@ -67,6 +68,7 @@ function sendToTab(tabId: number, msg: BackgroundToContent, frameId?: number): v
 /* ------------------------ badge / panel push ---------------------- */
 
 const panelPushers = new Map<number, Debounced<[MediaResource[]]>>();
+const availabilityPushers = new Map<number, Debounced<[number]>>();
 
 tabs.onChange((tabId, media) => {
   const count = media.filter((m) => !m.isProtected).length;
@@ -75,6 +77,15 @@ tabs.onChange((tabId, media) => {
   downloads.broadcast({ type: 'TAB_MEDIA_UPDATED', tabId, media } satisfies BackgroundPush);
 
   const state = tabs.peek(tabId);
+  if (settings.showVideoButton && !isExcluded(state?.pageUrl)) {
+    // Every frame hears this, so players inside iframes get the button too.
+    let push = availabilityPushers.get(tabId);
+    if (!push) {
+      push = debounce((n: number) => sendToTab(tabId, { type: 'MEDIA_AVAILABLE', videos: n }), 400, 1500);
+      availabilityPushers.set(tabId, push);
+    }
+    push(downloadableVideoCount(media));
+  }
   if (settings.showFloatingPanel && !isHostInList(state?.pageUrl, settings.panelDisabledSites)) {
     let push = panelPushers.get(tabId);
     if (!push) {
@@ -149,6 +160,8 @@ chrome.webRequest.onHeadersReceived.addListener(
 chrome.tabs.onRemoved.addListener((tabId) => {
   panelPushers.get(tabId)?.cancel();
   panelPushers.delete(tabId);
+  availabilityPushers.get(tabId)?.cancel();
+  availabilityPushers.delete(tabId);
   void tabs.remove(tabId);
 });
 
@@ -238,8 +251,17 @@ async function handleContent(msg: ContentToBackground, sender: chrome.runtime.Me
     }
     case 'PANEL_GET_MEDIA':
       return (await tabs.get(tabId)).collection.list();
-    case 'PANEL_DOWNLOAD':
-      return downloads.request({ tabId, mediaId: String(msg.mediaId) });
+    case 'PANEL_DOWNLOAD': {
+      const quality = parseQualityPreference(msg.quality);
+      return downloads.request({ tabId, mediaId: String(msg.mediaId), ...(quality ? { quality } : {}) });
+    }
+    case 'OVERLAY_GET_OPTIONS': {
+      const state = await tabs.get(tabId);
+      // Read stream manifests now — the user just asked for the quality list.
+      const streams = state.collection.list().filter((m) => m.isStream && !m.isProtected);
+      await Promise.all(streams.map((m) => analyzer.analyze(tabId, m.id).catch(() => undefined)));
+      return buildVideoOptions(state.collection.list(), typeof msg.src === 'string' ? msg.src : undefined);
+    }
     case 'OPEN_POPUP_MANAGER':
       await chrome.tabs.create({ url: chrome.runtime.getURL('manager/manager.html') });
       return true;

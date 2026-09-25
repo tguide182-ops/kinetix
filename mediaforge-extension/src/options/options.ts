@@ -13,7 +13,7 @@ let current: Settings;
 const TEXT_FIELDS = ['downloadFolder', 'filenameTemplate'] as const;
 const NUMBER_FIELDS = ['maxConcurrentDownloads', 'maxRetries', 'segmentConcurrency'] as const;
 const SELECT_FIELDS = ['preferredVideoQuality', 'preferredAudioQuality', 'theme'] as const;
-const CHECK_FIELDS = ['askWhereToSave', 'autoDownload', 'showFloatingPanel', 'autoDetect', 'showNotifications', 'debugLogging'] as const;
+const CHECK_FIELDS = ['askWhereToSave', 'autoDownload', 'showFloatingPanel', 'showVideoButton', 'autoDetect', 'showNotifications', 'debugLogging'] as const;
 
 function field<T extends HTMLElement>(name: string): T {
   return form.elements.namedItem(name) as unknown as T;

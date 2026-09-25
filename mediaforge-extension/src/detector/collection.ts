@@ -5,6 +5,15 @@ import { qualityFromText, qualityLabel } from '../utils/quality';
 import { isAcceptableMediaUrl, isBlobUrl, isSafeImageUrl, normalizeUrl, stripTracking } from '../utils/url';
 
 const MAX_ITEMS_PER_PAGE = 200;
+/**
+ * Files smaller than this are interface sounds, beacons or previews
+ * (e.g. a site's "click"/"success" sound effects), not media worth listing.
+ */
+export const MIN_LISTED_BYTES = 64 * 1024;
+
+function isTooSmall(r: MediaResource): boolean {
+  return !r.isStream && r.size !== undefined && r.size < MIN_LISTED_BYTES;
+}
 const MAX_TITLE = 300;
 
 function cleanText(s: string | undefined, max = MAX_TITLE): string | undefined {
@@ -137,6 +146,15 @@ export class MediaCollection {
   addResource(r: MediaResource): 'added' | 'updated' | 'ignored' {
     if (this.suppressed.has(r.dedupKey)) return 'ignored';
     const existing = this.items.get(r.dedupKey);
+    if (isTooSmall(r)) {
+      // A detector learned the real size: hide it now and on future detections.
+      this.suppressed.add(r.dedupKey);
+      if (existing) {
+        this.items.delete(r.dedupKey);
+        return 'updated';
+      }
+      return 'ignored';
+    }
     if (existing) {
       const merged = mergeResources(existing, r);
       if (JSON.stringify(merged) === JSON.stringify(existing)) return 'ignored';
@@ -154,8 +172,9 @@ export class MediaCollection {
       const r = candidateToResource(c, ctx, now);
       if (!r) continue;
       const outcome = this.addResource(r);
-      if (outcome === 'added') res.added.push(this.items.get(r.dedupKey)!);
-      else if (outcome === 'updated') res.updated.push(this.items.get(r.dedupKey)!);
+      const item = this.items.get(r.dedupKey);
+      if (outcome === 'added' && item) res.added.push(item);
+      else if (outcome === 'updated') res.updated.push(item ?? r);
     }
     return res;
   }
